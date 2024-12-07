@@ -11,6 +11,7 @@ const AddPage = () => {
     appSecret: "",
     email: "",
     referencePage: "",
+    pageLocation: { name: "London", id: 1556366336636 }, // Default to London
   });
 
   const referencePages = [
@@ -20,9 +21,23 @@ const AddPage = () => {
     "Reference Page 4",
   ];
 
+  const pageLocations = [
+    { name: "London", id: 1556366336636 },
+    { name: "Dhaka", id: 155636526336636 },
+    { name: "Canada", id: 155636624336636 },
+  ];
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name === "pageLocation") {
+      // Find the location object from the locations list based on selected id
+      const selectedLocation = pageLocations.find(
+        (location) => location?.id === parseInt(value)
+      );
+      setFormData({ ...formData, pageLocation: selectedLocation });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = (e) => {
@@ -106,6 +121,25 @@ const AddPage = () => {
                 placeholder="Enter Email"
                 required
               />
+            </div>
+
+            <div className="">
+              <label className="bloc text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
+                Page Location
+              </label>
+              <select
+                name="pageLocation"
+                value={formData?.pageLocation?.id}
+                onChange={handleInputChange}
+                className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select a Page Location</option>
+                {pageLocations.map((location, index) => (
+                  <option key={index} value={location.id}>
+                    {location.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Conditional Fields */}
