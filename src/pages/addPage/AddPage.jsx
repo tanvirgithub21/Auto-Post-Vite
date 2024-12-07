@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 
 const AddPage = () => {
@@ -13,6 +12,7 @@ const AddPage = () => {
     referencePage: "",
     pageLocation: { name: "London", id: 1556366336636 }, // Default to London
   });
+
 
   const referencePages = [
     "Reference Page 1",
