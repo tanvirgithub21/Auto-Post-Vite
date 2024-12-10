@@ -1,18 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import axiosInstance from "../../services/axiosInstance";
 
 const AddPage = () => {
   const [isReferencePage, setIsReferencePage] = useState(false);
   const [formData, setFormData] = useState({
-    pageName: "",
-    pageId: "",
-    shortLivedToken: "",
-    appId: "",
-    appSecret: "",
+    page_name: "",
+    page_id: "",
+    short_lived_token: "",
+    app_id: "",
+    app_secret: "",
     email: "",
-    referencePage: "",
+    reference_page_id: "",
+    reference_status: false,
     pageLocation: { name: "London", id: 1556366336636 }, // Default to London
   });
 
+  console.log(formData);
+
+  useEffect(() => {
+    if (isReferencePage) {
+      setFormData({
+        ...formData,
+        short_lived_token: "",
+        page_id: "",
+        app_secret: "",
+        reference_status: true,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        reference_status: false,
+      });
+    }
+  }, [isReferencePage]);
 
   const referencePages = [
     "Reference Page 1",
@@ -40,9 +61,48 @@ const AddPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(JSON.stringify(formData, null, 2));
+    setIsLoading(true); // Set loading to true
+    try {
+      const response = await axiosInstance.post("/page/add", formData);
+      console.log("Response:", response);
+
+      // Show success toast
+      toast.success("Token created successfully!");
+    } catch (error) {
+      // Handle errors properly
+      if (error.response) {
+        // Server responded with an error
+        const errorMessage =
+          error.response.data.message || "Something went wrong";
+        toast.error(`Error: ${errorMessage}`, {
+          style: {
+            backgroundColor: "#ffe1e1",
+            color: "#ff5353",
+          },
+        });
+      } else if (error.request) {
+        // No response was received
+        toast.error("No response from server.", {
+          style: {
+            backgroundColor: "#ffe1e1",
+            color: "#ff5353",
+          },
+        });
+      } else {
+        // Other errors (config issues, etc.)
+        toast.error(`Error: ${error.message}`, {
+          style: {
+            backgroundColor: "#ffe1e1",
+            color: "#ff5353",
+          },
+        });
+      }
+    } finally {
+      setIsLoading(false); // Set loading to false
+    }
   };
 
   return (
@@ -85,8 +145,8 @@ const AddPage = () => {
               </label>
               <input
                 type="text"
-                name="pageName"
-                value={formData.pageName}
+                name="page_name"
+                value={formData.page_name}
                 onChange={handleInputChange}
                 className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                 placeholder="Enter Page Name"
@@ -99,8 +159,8 @@ const AddPage = () => {
               </label>
               <input
                 type="text"
-                name="pageId"
-                value={formData.pageId}
+                name="page_id"
+                value={formData.page_id}
                 onChange={handleInputChange}
                 className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                 placeholder="Enter Page ID"
@@ -149,8 +209,8 @@ const AddPage = () => {
                   Reference Page
                 </label>
                 <select
-                  name="referencePage"
-                  value={formData.referencePage}
+                  name="reference_page_id"
+                  value={formData.reference_page_id}
                   onChange={handleInputChange}
                   className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                 >
@@ -170,8 +230,8 @@ const AddPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="shortLivedToken"
-                    value={formData.shortLivedToken}
+                    name="short_lived_token"
+                    value={formData.short_lived_token}
                     onChange={handleInputChange}
                     className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                     placeholder="Enter Short Lived Token"
@@ -184,8 +244,8 @@ const AddPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="appId"
-                    value={formData.appId}
+                    name="app_id"
+                    value={formData.app_id}
                     onChange={handleInputChange}
                     className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                     placeholder="Enter App ID"
@@ -198,8 +258,8 @@ const AddPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="appSecret"
-                    value={formData.appSecret}
+                    name="app_secret"
+                    value={formData.app_secret}
                     onChange={handleInputChange}
                     className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                     placeholder="Enter App Secret"
