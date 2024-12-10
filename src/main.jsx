@@ -7,7 +7,7 @@ import AllRoutes from "./routes/AllRoutes.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AllRoutes />
+        <AllRoutes />
     </BrowserRouter>
   </StrictMode>
 );

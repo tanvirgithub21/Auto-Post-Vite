@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axiosInstance from "../../services/axiosInstance";
 
 const DragAndDropFileInput = ({
-  getAcceptType,
   handleFileChange,
   files,
   setFiles,
+  allowedFileTypes,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -21,7 +22,10 @@ const DragAndDropFileInput = ({
     e.preventDefault();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
-    handleFileChange({ target: { files: droppedFiles } });
+    const filteredFiles = droppedFiles.filter((file) =>
+      allowedFileTypes.includes(file.type)
+    );
+    handleFileChange({ target: { files: filteredFiles } });
   };
 
   const removeFile = (indexToRemove) => {
@@ -43,7 +47,7 @@ const DragAndDropFileInput = ({
         <label>
           <input
             type="file"
-            accept={getAcceptType()}
+            accept={allowedFileTypes.join(",")}
             multiple
             onChange={handleFileChange}
             className="hidden"
@@ -54,8 +58,6 @@ const DragAndDropFileInput = ({
           </p>
         </label>
       </div>
-
-      {/* Enhanced Preview Section */}
       {files && files.length > 0 && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-200">
@@ -107,37 +109,85 @@ const DragAndDropFileInput = ({
 };
 
 const AddContent = () => {
-  const [page, setPage] = useState("");
+  const [selectePageId, setSelectePageId] = useState("");
   const [videoType, setVideoType] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState([]);
 
-  const pages = Array.from({ length: 20 }, (_, i) => `Page ${i + 1}`);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axiosInstance.get("/page/all");
+        setData(response.data);
+      } catch (err) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const videoTypes = ["Reel", "Video", "Story", "Photo"];
+
+  const allowedFileTypes = (() => {
+    switch (videoType) {
+      case "Reel":
+      case "Video":
+        return ["video/*"];
+      case "Photo":
+        return ["image/*"];
+      case "Story":
+        return ["image/*", "video/*"];
+      default:
+        return [];
+    }
+  })();
 
   const handleFileChange = (e) => {
     setFiles([...files, ...Array.from(e.target.files)]);
   };
 
-  const getAcceptType = () => {
-    if (videoType === "Video" || videoType === "Reel") return "video/*";
-    if (videoType === "Photo") return "image/*";
-    if (videoType === "Story") return "video/*,image/*";
-    return "";
-  };
-
-  const handleUpload = () => {
-    if (!page || !videoType || !files.length) {
+  const handleUpload = async () => {
+    if (!selectePageId || !videoType || !files.length) {
       alert("Please complete all fields and add files!");
       return;
     }
-    alert(
-      `Uploading to: ${page}\nType: ${videoType}\nDescription: ${description}\nFiles: ${files
-        .map((file) => file.name)
-        .join(", ")}`
-    );
-    setFiles([]);
+
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+    formData.append("page_id", selectePageId);
+    formData.append("content_type", videoType);
+    formData.append("description", description);
+
+    try {
+      const response = await axiosInstance.post("/content/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.status === 200) {
+        alert("Content uploaded successfully!");
+        setFiles([]);
+        setSelectePageId("");
+        setVideoType("");
+        setDescription("");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to upload content. Please try again.");
+    }
   };
+
+  if (loading) return <div>Loading......</div>;
 
   return (
     <div className="min-h-[100vh_-_64px] flex items-center justify-center p-4">
@@ -147,28 +197,24 @@ const AddContent = () => {
             Upload Form
           </h1>
         </div>
-
         <form>
-          {/* Select Page */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
               Select Page
             </label>
             <select
-              value={page}
-              onChange={(e) => setPage(e.target.value)}
+              value={selectePageId}
+              onChange={(e) => setSelectePageId(e.target.value)}
               className="w-full p-3 rounded border dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring focus:ring-green-500 transition duration-300"
             >
               <option value="">Select a Page</option>
-              {pages.map((pageName, index) => (
-                <option key={index} value={pageName}>
-                  {pageName}
+              {data.map((page) => (
+                <option key={page.page_id} value={page.page_id}>
+                  {page.page_name}
                 </option>
               ))}
             </select>
           </div>
-
-          {/* Select Video Type */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
               Video Type
@@ -179,15 +225,13 @@ const AddContent = () => {
               className="w-full p-3 rounded border dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring focus:ring-green-500 transition duration-300"
             >
               <option value="">Select Video Type</option>
-              {videoTypes.map((type, index) => (
-                <option key={index} value={type}>
+              {videoTypes.map((type) => (
+                <option key={type} value={type}>
                   {type}
                 </option>
               ))}
             </select>
           </div>
-
-          {/* Description */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
               Description
@@ -199,23 +243,17 @@ const AddContent = () => {
               placeholder="Enter a description..."
             ></textarea>
           </div>
-
-          {/* File Input */}
-          {videoType && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
-                Upload File(s)
-              </label>
-              <DragAndDropFileInput
-                getAcceptType={getAcceptType}
-                handleFileChange={handleFileChange}
-                files={files}
-                setFiles={setFiles}
-              />
-            </div>
-          )}
-
-          {/* Upload Button */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
+              Upload File(s)
+            </label>
+            <DragAndDropFileInput
+              handleFileChange={handleFileChange}
+              files={files}
+              setFiles={setFiles}
+              allowedFileTypes={allowedFileTypes}
+            />
+          </div>
           <div>
             <button
               onClick={handleUpload}
