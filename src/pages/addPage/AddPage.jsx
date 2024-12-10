@@ -3,6 +3,27 @@ import { toast } from "sonner";
 import axiosInstance from "../../services/axiosInstance";
 
 const AddPage = () => {
+  const [pageLoading, setPageLoading] = useState(false);
+  const [pageError, setPageError] = useState(null);
+  const [pageData, setPageData] = useState([]);
+
+  useEffect(() => {
+    const fetchPageData = async () => {
+      setPageLoading(true);
+      setPageError(null);
+      try {
+        const response = await axiosInstance.get("/page/all");
+        setPageData(response.data);
+      } catch (err) {
+        setPageError(err.message || "Something went wrong");
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    fetchPageData();
+  }, []);
+
   const [isReferencePage, setIsReferencePage] = useState(false);
   const [formData, setFormData] = useState({
     page_name: "",
@@ -13,7 +34,7 @@ const AddPage = () => {
     email: "",
     reference_page_id: "",
     reference_status: false,
-    pageLocation: { name: "London", id: 1556366336636 }, // Default to London
+    page_location: "1556366336636", // Default to London
   });
 
   console.log(formData);
@@ -55,7 +76,7 @@ const AddPage = () => {
       const selectedLocation = pageLocations.find(
         (location) => location?.id === parseInt(value)
       );
-      setFormData({ ...formData, pageLocation: selectedLocation });
+      setFormData({ ...formData, page_location: selectedLocation.id });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -189,7 +210,7 @@ const AddPage = () => {
               </label>
               <select
                 name="pageLocation"
-                value={formData?.pageLocation?.id}
+                value={formData?.page_location?.id}
                 onChange={handleInputChange}
                 className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
               >
@@ -215,9 +236,9 @@ const AddPage = () => {
                   className="w-full p-3 outline-none rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white transition duration-300 focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select a Reference Page</option>
-                  {referencePages.map((page, index) => (
-                    <option key={index} value={page}>
-                      {page}
+                  {pageData?.map((page, index) => (
+                    <option key={index} value={page.page_id}>
+                      {page.page_name}
                     </option>
                   ))}
                 </select>
