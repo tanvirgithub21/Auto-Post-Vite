@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import axiosInstance from "../../services/axiosInstance";
+import { pageLocations } from "../../services/locationData";
 
 const AddPage = () => {
   const [pageLoading, setPageLoading] = useState(false);
@@ -34,7 +35,7 @@ const AddPage = () => {
     email: "",
     reference_page_id: "",
     reference_status: false,
-    page_location: "1556366336636", // Default to London
+    page_location: 101889586519301, // Default to London
   });
 
   console.log(formData);
@@ -56,27 +57,14 @@ const AddPage = () => {
     }
   }, [isReferencePage]);
 
-  const referencePages = [
-    "Reference Page 1",
-    "Reference Page 2",
-    "Reference Page 3",
-    "Reference Page 4",
-  ];
-
-  const pageLocations = [
-    { name: "London", id: 1556366336636 },
-    { name: "Dhaka", id: 155636526336636 },
-    { name: "Canada", id: 155636624336636 },
-  ];
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "pageLocation") {
       // Find the location object from the locations list based on selected id
       const selectedLocation = pageLocations.find(
-        (location) => location?.id === parseInt(value)
+        (location) => location?.location_id === parseInt(value)
       );
-      setFormData({ ...formData, page_location: selectedLocation.id });
+      setFormData({ ...formData, page_location: selectedLocation.location_id });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -205,7 +193,7 @@ const AddPage = () => {
             </div>
 
             <div className="">
-              <label className="bloc text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
                 Page Location
               </label>
               <select
@@ -216,8 +204,10 @@ const AddPage = () => {
               >
                 <option value="">Select a Page Location</option>
                 {pageLocations.map((location, index) => (
-                  <option key={index} value={location.id}>
-                    {location.name}
+                  <option key={index} value={location.location_id}>
+                    {`${
+                      location.location_name
+                    } - $${location.currency_rate.toFixed(2)}`}
                   </option>
                 ))}
               </select>
