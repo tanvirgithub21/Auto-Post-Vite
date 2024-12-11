@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Creating an axios instance with custom settings
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000/api/v1",
+  baseURL: "https://page-auto-post-server.onrender.com/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
