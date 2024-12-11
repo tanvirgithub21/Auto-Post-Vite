@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../services/axiosInstance";
+import FullPageLoader from "../../components/loading/FullPageLoader";
 
 const DragAndDropFileInput = ({
   handleFileChange,
@@ -156,8 +157,10 @@ const AddContent = () => {
   };
 
   const handleUpload = async () => {
+    setLoading(true);
     if (!selectePageId || !videoType || !files.length) {
       alert("Please complete all fields and add files!");
+      setLoading(false);
       return;
     }
 
@@ -175,6 +178,7 @@ const AddContent = () => {
       });
 
       if (response.status === 200) {
+        setLoading(false);
         alert("Content uploaded successfully!");
         setFiles([]);
         setSelectePageId("");
@@ -183,11 +187,12 @@ const AddContent = () => {
       }
     } catch (error) {
       console.error(error);
+      setLoading(false);
       alert("Failed to upload content. Please try again.");
     }
   };
 
-  if (loading) return <div>Loading......</div>;
+  if (loading) return <FullPageLoader />;
 
   return (
     <div className="min-h-[100vh_-_64px] flex items-center justify-center p-4">
